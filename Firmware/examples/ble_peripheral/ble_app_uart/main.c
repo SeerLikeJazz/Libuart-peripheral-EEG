@@ -1050,6 +1050,38 @@ void throughput_test()
 }
 
 
+
+#include "nrf_delay.h"
+#include "ADS1299_Library.h"
+
+#include "nrf_drv_gpiote.h"
+
+#define	 DRDY_PIN								3
+
+void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+{
+
+	if(pin == DRDY_PIN)
+		updateBoardData();
+}
+
+void drdy_pin_init(void)
+{
+	ret_code_t err_code;
+
+	err_code = nrf_drv_gpiote_init();//初始化GPIOTE
+	APP_ERROR_CHECK(err_code);
+	//配置SENSE模式，选择fales为sense配置
+	nrf_drv_gpiote_in_config_t in_config = NRFX_GPIOTE_CONFIG_IN_SENSE_HITOLO(true);
+	in_config.pull = NRF_GPIO_PIN_NOPULL;	
+	//配置INT-KEY绑定POTR
+	err_code = nrf_drv_gpiote_in_init(DRDY_PIN, &in_config, in_pin_handler);
+	APP_ERROR_CHECK(err_code);
+	//使能
+	nrf_drv_gpiote_in_event_enable(DRDY_PIN, true);
+
+}
+
 /**@brief Application main function.
  */
 int main(void)
@@ -1059,28 +1091,61 @@ int main(void)
 //    uart_init();
     log_init();	
     timers_init();
+/*3V3电源打开*/
+	nrf_gpio_cfg_output(17);//DVDD_EN
+	nrf_delay_us(10);
+	for(uint8_t i=0; i<7; i++)
+	{
+		nrf_gpio_pin_set(17);
+		nrf_delay_us(500);	
+		nrf_gpio_pin_clear(17);
+		nrf_delay_us(100);	
+	}	
+	nrf_gpio_pin_set(17);
+/*5v电源打开*/
+	nrf_gpio_cfg_output(18);//AVDD_EN
+	nrf_gpio_pin_set(18);//AVDD_EN
+/*ADS1292的gpio初始化*/	
+
 	
-//		nrf_drv_clock_lfclk_request(NULL);
-
-    nrf_libuarte_async_config_t nrf_libuarte_async_config = {
-            .tx_pin     = TX_PIN_NUMBER,
-            .rx_pin     = RX_PIN_NUMBER,
-            .baudrate   = NRF_UARTE_BAUDRATE_921600,
-            .parity     = NRF_UARTE_PARITY_EXCLUDED,
-            .hwfc       = NRF_UARTE_HWFC_DISABLED,
-            .timeout_us = 100,
-            .int_prio   = APP_IRQ_PRIORITY_LOW
-    };
-
-    ret_code_t err_code = nrf_libuarte_async_init(&libuarte, &nrf_libuarte_async_config, uart_event_handler, (void *)&libuarte);
-
-    APP_ERROR_CHECK(err_code);
-
-    nrf_libuarte_async_enable(&libuarte);
-
-    err_code = nrf_libuarte_async_tx(&libuarte, text, text_size);
-    APP_ERROR_CHECK(err_code);		
+	nrf_gpio_cfg_output(6);//SPI_SS_PIN
+	nrf_gpio_cfg_output(7);//ADS_START
+	nrf_gpio_cfg_output(8);//ADS_RESET
+	nrf_gpio_cfg_output(9);//ADS_PWDN
 	
+	nrf_gpio_pin_set(6);//CS高电平
+	nrf_gpio_pin_set(9);//PWDN高电平
+	nrf_gpio_pin_set(8);//RESET高电平
+	nrf_gpio_pin_clear(7);//START低电平	
+	
+	SPI_User_init();
+	initialize_ads(SAMPLE_RATE_250);
+	ADS_ModeSelect(TestSignal);
+		//配置引脚中断
+	drdy_pin_init();
+	
+
+	
+
+//    nrf_libuarte_async_config_t nrf_libuarte_async_config = {
+//            .tx_pin     = TX_PIN_NUMBER,
+//            .rx_pin     = RX_PIN_NUMBER,
+//            .baudrate   = NRF_UARTE_BAUDRATE_921600,
+//            .parity     = NRF_UARTE_PARITY_EXCLUDED,
+//            .hwfc       = NRF_UARTE_HWFC_DISABLED,
+//            .timeout_us = 100,
+//            .int_prio   = APP_IRQ_PRIORITY_LOW
+//    };
+
+//    ret_code_t err_code = nrf_libuarte_async_init(&libuarte, &nrf_libuarte_async_config, uart_event_handler, (void *)&libuarte);
+
+//    APP_ERROR_CHECK(err_code);
+
+//    nrf_libuarte_async_enable(&libuarte);
+
+//    err_code = nrf_libuarte_async_tx(&libuarte, text, text_size);
+//    APP_ERROR_CHECK(err_code);		
+//	
     buttons_leds_init(&erase_bonds);
     power_management_init();
     ble_stack_init();	
@@ -1093,7 +1158,6 @@ int main(void)
 
 		conn_evt_len_ext_set();
     // Start execution.
-//    printf("\r\nUART started.\r\n");
     NRF_LOG_INFO("Debug logging for UART over RTT started.");
     advertising_start(erase_bonds);
 
@@ -1102,7 +1166,6 @@ int main(void)
     for (;;)
     {
         idle_state_handle();
-//				User_handle();
     }
 }
 

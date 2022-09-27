@@ -49,12 +49,12 @@ extern "C" {
 // LEDs definitions for PCA10040
 #define LEDS_NUMBER    4
 
-#define LED_START      17
-#define LED_1          17
-#define LED_2          18
-#define LED_3          19
-#define LED_4          20
-#define LED_STOP       20
+#define LED_START      25
+#define LED_1          25
+#define LED_2          26
+#define LED_3          27
+#define LED_4          31
+#define LED_STOP       31
 
 #define LEDS_ACTIVE_STATE 0
 
