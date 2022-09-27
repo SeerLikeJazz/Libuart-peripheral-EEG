@@ -120,9 +120,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
-          <Name>槬
-
-</Name>
+          <Name></Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -161,6 +159,16 @@
           <count>1</count>
           <WinNumber>1</WinNumber>
           <ItemText>boardChannelDataInt</ItemText>
+        </Ww>
+        <Ww>
+          <count>2</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>eCon_Message</ItemText>
+        </Ww>
+        <Ww>
+          <count>3</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>err_code</ItemText>
         </Ww>
       </WatchWindow1>
       <Tracepoint>
@@ -904,8 +912,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\..\..\..\..\..\Heart-monitoring\service_1292\integration\nrfx\legacy\nrf_drv_spi.c</PathWithFileName>
-      <FilenameWithoutPath>nrf_drv_spi.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_spi.c</PathWithFileName>
+      <FilenameWithoutPath>nrfx_spi.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -916,8 +924,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_spi.c</PathWithFileName>
-      <FilenameWithoutPath>nrfx_spi.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_spim.c</PathWithFileName>
+      <FilenameWithoutPath>nrfx_spim.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -928,8 +936,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_spim.c</PathWithFileName>
-      <FilenameWithoutPath>nrfx_spim.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_spi.c</PathWithFileName>
+      <FilenameWithoutPath>nrf_drv_spi.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>

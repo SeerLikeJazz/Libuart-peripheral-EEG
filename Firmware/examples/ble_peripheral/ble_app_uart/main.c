@@ -328,7 +328,7 @@ static void nus_data_handler(ble_nus_evt_t * p_evt)
     }
 		else if (p_evt->type == BLE_NUS_EVT_COMM_STARTED)
 		{
-			APP_ERROR_CHECK(app_timer_start(m_timer_speed, APP_TIMER_TICKS(20),NULL));			
+//			APP_ERROR_CHECK(app_timer_start(m_timer_speed, APP_TIMER_TICKS(20),NULL));			
 		}
 		else if (p_evt->type == BLE_NUS_EVT_TX_RDY)
 		{
@@ -530,8 +530,7 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
             {
                 .rx_phys = BLE_GAP_PHY_2MBPS,
                 .tx_phys = BLE_GAP_PHY_2MBPS,
-            };
-						
+            };			
 static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 {
     uint32_t err_code;
@@ -546,8 +545,8 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
             err_code = nrf_ble_qwr_conn_handle_assign(&m_qwr, m_conn_handle);
             APP_ERROR_CHECK(err_code);
-				
-								 err_code = sd_ble_gap_phy_update(p_gap_evt->conn_handle, &phys);
+						/*主动要求更新PHY*/
+						err_code = sd_ble_gap_phy_update(p_gap_evt->conn_handle, &phys);
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
@@ -564,8 +563,8 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             NRF_LOG_DEBUG("PHY update request.");
             ble_gap_phys_t const phys =
             {
-                .rx_phys = BLE_GAP_PHY_AUTO,
-                .tx_phys = BLE_GAP_PHY_AUTO,
+                .rx_phys = BLE_GAP_PHY_2MBPS,
+                .tx_phys = BLE_GAP_PHY_2MBPS,
             };
             err_code = sd_ble_gap_phy_update(p_ble_evt->evt.gap_evt.conn_handle, &phys);
             APP_ERROR_CHECK(err_code);
@@ -1005,6 +1004,7 @@ void ble_data_send_with_queue(void)
 	}			
 }
 
+/*1-测试用生成的数据*/
 static void throughput_timer_handler(void * p_context)
 {
 	ret_code_t err_code1, err_code2;	
@@ -1042,6 +1042,34 @@ static void throughput_timer_handler(void * p_context)
 	}	
 }
 
+/*2-ADS1299生成的数据*/
+extern uint8_t eCon_Message[240];
+void  data_prepare()
+{
+	ret_code_t err_code;
+	buffer_t buf;	
+	memcpy(&m_data_array[(m_cnt_7ms)*220],eCon_Message,220);
+	buf.p_data = &m_data_array[(m_cnt_7ms)*220];
+	buf.length = 220;
+	err_code = nrf_queue_push(&m_buf_queue, &buf);
+	
+	ble_data_send_with_queue();
+	
+	if(err_code == NRF_ERROR_NO_MEM)
+	{
+		NRF_LOG_INFO("Drop");	
+	}	
+	
+	m_cnt_7ms++;
+	if (m_cnt_7ms == 20){
+		NRF_LOG_INFO("==**Speed: %d B/s**==", m_len_sent*3);
+		m_cnt_7ms = 0;
+		m_len_sent = 0;
+	
+	}
+}
+
+
 void throughput_test()
 {
 	ret_code_t err_code;
@@ -1061,8 +1089,11 @@ void throughput_test()
 void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
 
-	if(pin == DRDY_PIN)
+	if(pin == DRDY_PIN){
 		updateBoardData();
+		
+	}
+		
 }
 
 void drdy_pin_init(void)
@@ -1079,6 +1110,7 @@ void drdy_pin_init(void)
 	APP_ERROR_CHECK(err_code);
 	//使能
 	nrf_drv_gpiote_in_event_enable(DRDY_PIN, true);
+	
 
 }
 
@@ -1088,7 +1120,6 @@ int main(void)
 {
     bool erase_bonds;
     // Initialize.
-//    uart_init();
     log_init();	
     timers_init();
 /*3V3电源打开*/
@@ -1145,7 +1176,7 @@ int main(void)
 
 //    err_code = nrf_libuarte_async_tx(&libuarte, text, text_size);
 //    APP_ERROR_CHECK(err_code);		
-//	
+	
     buttons_leds_init(&erase_bonds);
     power_management_init();
     ble_stack_init();	
@@ -1161,7 +1192,7 @@ int main(void)
     NRF_LOG_INFO("Debug logging for UART over RTT started.");
     advertising_start(erase_bonds);
 
-		throughput_test();
+//		throughput_test();
     // Enter main loop.
     for (;;)
     {

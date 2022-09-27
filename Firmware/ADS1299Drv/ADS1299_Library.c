@@ -52,7 +52,7 @@ void SPI_User_init(void)
 	spi_config.mode = NRF_DRV_SPI_MODE_1;													//模式1
 	
 	  //初始化SPI
-    APP_ERROR_CHECK(nrf_drv_spi_init(&spi, &spi_config, spi_event_handler, NULL));	
+    APP_ERROR_CHECK(nrf_drv_spi_init(&spi, &spi_config, NULL, NULL));	
 	
 }
 
@@ -87,19 +87,10 @@ uint8_t    ADS_xfer(uint8_t byte)
 	uint8_t d_read;						
 	
 	//8位地址
-	spi_tx_buf[0] =	 byte;		
-
-	//传输完成标志设置为false
-	spi_xfer_done = false;
-	
+	spi_tx_buf[0] =	 byte;			
 	//启动数据传输
-	APP_ERROR_CHECK(nrf_drv_spi_transfer(&spi, spi_tx_buf, 1, spi_rx_buf, 1));	
-	
-	//等待SPI传输完成
-	while(!spi_xfer_done);
-		
-	d_read = spi_rx_buf[0];
-		
+	APP_ERROR_CHECK(nrf_drv_spi_transfer(&spi, spi_tx_buf, 1, spi_rx_buf, 1));			
+	d_read = spi_rx_buf[0];		
 	//返回读取数值
 	return	d_read;	
 }
@@ -375,8 +366,12 @@ int  boardStat;
 /*数据转换成int*/
 int boardChannelDataInt[24] = {0xAABBCCDD};;
 /*数据临时存储*/
-volatile uint8_t eCon_Message[100] = {0xBB,0xAA};
+uint8_t eCon_Message[240] = {0xBB,0xAA};
+int byteCounter = 2;//前面2字节为包头
+/*包序号*/
+uint8_t IDX;
 
+void  data_prepare();
 
 /**
   * @brief  更新ADS1299的数据
@@ -385,7 +380,7 @@ volatile uint8_t eCon_Message[100] = {0xBB,0xAA};
 void updateBoardData(void)
 { 
 	uint8_t inByte;
-	int byteCounter = 2;//前面2字节为包头
+	
 	csLow();
   for (int i = 0; i < 3; i++)
   {
@@ -403,22 +398,32 @@ void updateBoardData(void)
       boardChannelDataInt[i+1] = (boardChannelDataInt[i+1] << 8) | inByte; // int data goes here
     }
   }
-	
 
   csHigh(); // close SPI
 	
   // need to convert 24bit to 32bit if using the filter
-  for (int i = 0; i < 8; i++)
-  { // convert 3 byte 2's compliment to 4 byte 2's compliment
-    if ((boardChannelDataInt[i+1] & 0x00800000) == 0x00800000)
-    {
-      boardChannelDataInt[i+1] |= 0xFF000000;
-    }
-    else
-    {
-      boardChannelDataInt[i+1] &= 0x00FFFFFF;
-    }
-  }
+//  for (int i = 0; i < 8; i++)
+//  { // convert 3 byte 2's compliment to 4 byte 2's compliment
+//    if ((boardChannelDataInt[i+1] & 0x00800000) == 0x00800000)
+//    {
+//      boardChannelDataInt[i+1] |= 0xFF000000;
+//    }
+//    else
+//    {
+//      boardChannelDataInt[i+1] &= 0x00FFFFFF;
+//    }
+//  }
+	if(byteCounter == 218){ //2+24x9
+		byteCounter = 2;
+		//校验位
+		eCon_Message[218] = 0;
+		//包序号
+		eCon_Message[219] = IDX++;	
+		data_prepare();
+	}
+		
+
+	
 
 }
 
