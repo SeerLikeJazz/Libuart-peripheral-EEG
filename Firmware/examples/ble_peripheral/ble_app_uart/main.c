@@ -101,13 +101,12 @@
 #include "nrf_log_default_backends.h"
 #include "pca10040.h"
 
-#include "nrf_libuarte_async.h"
-#include "nrf_queue.h"
 
-NRF_LIBUARTE_ASYNC_DEFINE(libuarte, 0, 1, 2, NRF_LIBUARTE_PERIPHERAL_NOT_USED, 255, 3);
-static uint8_t text[] = "UART example started.\r\n Loopback:\r\n";
-static uint8_t text_size = sizeof(text);
-static volatile bool m_loopback_phase;
+#include "nrf_queue.h"
+#include "nrf_drv_gpiote.h"
+
+#define	 DRDY_PIN								3
+
 
 
 
@@ -192,54 +191,6 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 {
     app_error_handler(DEAD_BEEF, line_num, p_file_name);
 }
-
-
-void uart_event_handler(void * context, nrf_libuarte_async_evt_t * p_evt)
-{
-
-	
-    nrf_libuarte_async_t * p_libuarte = (nrf_libuarte_async_t *)context;
-	
-    ret_code_t err_code;
-
-    switch (p_evt->type)
-    {
-        case NRF_LIBUARTE_ASYNC_EVT_ERROR:
-            bsp_board_led_invert(0);
-            break;
-        case NRF_LIBUARTE_ASYNC_EVT_RX_DATA:
-//						if(CCCD_Flag) {
-//                buffer_t buf = {
-//                    .p_data = p_evt->data.rxtx.p_data,
-//                    .length = p_evt->data.rxtx.length,
-//                };
-//								err_code = nrf_queue_push(&m_buf_queue, &buf);
-////								NRF_LOG_INFO("push ret is %d ,queue_utilization is %d", err_code, nrf_queue_utilization_get(&m_buf_queue));
-//                APP_ERROR_CHECK(err_code);						
-//						}
-						nrf_libuarte_async_rx_free(p_libuarte, p_evt->data.rxtx.p_data, p_evt->data.rxtx.length);	
-            break;
-        case NRF_LIBUARTE_ASYNC_EVT_TX_DONE:
-//            if (m_loopback_phase)
-//            {
-//                nrf_libuarte_async_rx_free(p_libuarte, p_evt->data.rxtx.p_data, p_evt->data.rxtx.length);
-//                if (!nrf_queue_is_empty(&m_buf_queue))
-//                {
-//                    buffer_t buf;
-//                    ret = nrf_queue_pop(&m_buf_queue, &buf);
-//                    APP_ERROR_CHECK(ret);
-//                    UNUSED_RETURN_VALUE(nrf_libuarte_async_tx(p_libuarte, buf.p_data, buf.length));
-//                }
-//            }
-            bsp_board_led_invert(2);
-            break;
-        default:
-            break;
-    }
-}
-
-
-
 
 /**@brief Function for initializing the timer module.
  */
@@ -525,7 +476,6 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
  * @param[in]   p_ble_evt   Bluetooth stack event.
  * @param[in]   p_context   Unused.
  */
-
   ble_gap_phys_t const phys =
             {
                 .rx_phys = BLE_GAP_PHY_2MBPS,
@@ -547,13 +497,15 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             APP_ERROR_CHECK(err_code);
 						/*主动要求更新PHY*/
 						err_code = sd_ble_gap_phy_update(p_gap_evt->conn_handle, &phys);
+nrf_drv_gpiote_in_event_enable(DRDY_PIN,true);
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
             NRF_LOG_INFO("Disconnected");
             // LED indication will be changed when advertising starts.
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
-						APP_ERROR_CHECK(app_timer_stop(m_timer_speed));	
+//						APP_ERROR_CHECK(app_timer_stop(m_timer_speed));	
+nrf_drv_gpiote_in_event_disable(DRDY_PIN);
 						m_len_sent = 0;
 						m_cnt_7ms = 0;
             break;
@@ -964,12 +916,18 @@ void ble_data_send_with_queue(void)
 	{
 		length = m_buf.length;
 		err_code = ble_nus_data_send(&m_nus, m_buf.p_data, &length, m_conn_handle);
-		//NRF_LOG_INFO("Data2: %d", m_buf.p_data[0]);
-		if ( (err_code != NRF_ERROR_INVALID_STATE) && (err_code != NRF_ERROR_RESOURCES) &&
+
+		if (err_code == BLE_ERROR_GATTS_SYS_ATTR_MISSING){
+				uint32_t err_code = sd_ble_gatts_sys_attr_set(m_conn_handle, NULL, 0, 0);
+				APP_ERROR_CHECK(err_code);
+				NRF_LOG_INFO("Case 1: Notification Disabled ===================================");
+		}		
+		else if ( (err_code != NRF_ERROR_INVALID_STATE) && (err_code != NRF_ERROR_RESOURCES) &&
 				 (err_code != NRF_ERROR_NOT_FOUND) )
 		{
 				APP_ERROR_CHECK(err_code);
 		}
+
 		if (err_code == NRF_SUCCESS)
 		{
 			m_len_sent += length;
@@ -1057,7 +1015,7 @@ void  data_prepare()
 	
 	if(err_code == NRF_ERROR_NO_MEM)
 	{
-		NRF_LOG_INFO("Drop");	
+//		NRF_LOG_INFO("Drop");	
 	}	
 	
 	m_cnt_7ms++;
@@ -1082,9 +1040,7 @@ void throughput_test()
 #include "nrf_delay.h"
 #include "ADS1299_Library.h"
 
-#include "nrf_drv_gpiote.h"
 
-#define	 DRDY_PIN								3
 
 void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
@@ -1109,8 +1065,8 @@ void drdy_pin_init(void)
 	err_code = nrf_drv_gpiote_in_init(DRDY_PIN, &in_config, in_pin_handler);
 	APP_ERROR_CHECK(err_code);
 	//使能
-	nrf_drv_gpiote_in_event_enable(DRDY_PIN, true);
-	
+//	nrf_drv_gpiote_in_event_enable(DRDY_PIN, true);
+
 
 }
 
@@ -1156,27 +1112,6 @@ int main(void)
 	drdy_pin_init();
 	
 
-	
-
-//    nrf_libuarte_async_config_t nrf_libuarte_async_config = {
-//            .tx_pin     = TX_PIN_NUMBER,
-//            .rx_pin     = RX_PIN_NUMBER,
-//            .baudrate   = NRF_UARTE_BAUDRATE_921600,
-//            .parity     = NRF_UARTE_PARITY_EXCLUDED,
-//            .hwfc       = NRF_UARTE_HWFC_DISABLED,
-//            .timeout_us = 100,
-//            .int_prio   = APP_IRQ_PRIORITY_LOW
-//    };
-
-//    ret_code_t err_code = nrf_libuarte_async_init(&libuarte, &nrf_libuarte_async_config, uart_event_handler, (void *)&libuarte);
-
-//    APP_ERROR_CHECK(err_code);
-
-//    nrf_libuarte_async_enable(&libuarte);
-
-//    err_code = nrf_libuarte_async_tx(&libuarte, text, text_size);
-//    APP_ERROR_CHECK(err_code);		
-	
     buttons_leds_init(&erase_bonds);
     power_management_init();
     ble_stack_init();	
