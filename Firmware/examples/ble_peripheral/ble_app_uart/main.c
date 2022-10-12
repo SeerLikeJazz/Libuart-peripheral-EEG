@@ -1107,7 +1107,7 @@ int main(void)
 	
 	SPI_User_init();
 	initialize_ads(SAMPLE_RATE_250);
-	ADS_ModeSelect(TestSignal);
+	ADS_ModeSelect(InternalShort);
 		//≈‰÷√“˝Ω≈÷–∂œ
 	drdy_pin_init();
 	

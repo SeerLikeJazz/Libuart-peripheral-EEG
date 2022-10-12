@@ -1,7 +1,12 @@
 # Libuart-peripheral-EEG
-8 ch signals send by BLE
+8 ch signals send by BLE   
+![](/Image/PCB_board.jpg)  
 
 ## 更新记录
+### 22.10.12
+- NFC引脚设置为普通GPIO模式
+- 添加并修改matlab plot 代码
+
 ### 22.09.30
 - Connected和Disconnected事件中使能失能DRDY中断引脚
 - 解决0x3401 ERROR ，BLE_ERROR_GATTS_SYS_ATTR_MISSING，断开后可再重连

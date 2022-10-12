@@ -297,34 +297,38 @@ void ADS_ModeSelect(uint8_t mode)
 //			//	csLow(BOTH_ADS);
 //			}
 //			break;
-//		case InternalShort:
-//			{
-//				ADS_WREG(CONFIG2,0xC0, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH1SET,0x01, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH2SET,0x01, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH3SET,0x01, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH4SET,0x01, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH5SET,0x01, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH6SET,0x01, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH7SET,0x01, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH8SET,0x01, BOTH_ADS);
-//				HAL_Delay(10);
+		case InternalShort:
+			{
+	ADS_WREG(CONFIG3,0xE0);
+	nrf_delay_ms(100);
+	ADS_WREG(CONFIG1,0x95);
+	nrf_delay_ms(100);
+				ADS_WREG(CONFIG2,0xC0);
+				nrf_delay_ms(10);
+								
+				ADS_WREG(CH1SET,0x01);
+				nrf_delay_ms(10);
+				ADS_WREG(CH2SET,0x01);
+				nrf_delay_ms(10);
+				ADS_WREG(CH3SET,0x01);
+				nrf_delay_ms(10);
+				ADS_WREG(CH4SET,0x01);
+				nrf_delay_ms(10);
+				ADS_WREG(CH5SET,0x01);
+				nrf_delay_ms(10);
+				ADS_WREG(CH6SET,0x01);
+				nrf_delay_ms(10);
+				ADS_WREG(CH7SET,0x01);
+				nrf_delay_ms(10);
+				ADS_WREG(CH8SET,0x01);
+				nrf_delay_ms(10);
 
-//				ADS_START(BOTH_ADS);
-//				HAL_Delay(40);
-//				ADS_RDATAC(BOTH_ADS);
-//				HAL_Delay(10);
-//			//	csLow(BOTH_ADS);
-//			}
-//			break;
+				ADS_START();
+				nrf_delay_ms(40);
+				ADS_RDATAC();
+				nrf_delay_ms(10);
+			}
+			break;
 		case TestSignal:
 			{
 	ADS_WREG(CONFIG3,0xE0);
