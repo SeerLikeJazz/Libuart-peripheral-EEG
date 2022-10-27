@@ -100,6 +100,7 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 #include "pca10040.h"
+#include "nrf_delay.h"
 
 
 #include "nrf_queue.h"
@@ -435,6 +436,45 @@ static void sleep_mode_enter(void)
 {
     uint32_t err_code = bsp_indication_set(BSP_INDICATE_IDLE);
     APP_ERROR_CHECK(err_code);
+	
+	//关闭耗电的部分
+	app_timer_stop_all();
+	nrf_gpio_pin_clear(9); //1299芯片	PWDN
+	SPI_uninit();
+	
+	
+	nrf_gpio_pin_clear(18);
+	
+	nrf_gpio_pin_clear(17);
+	nrf_delay_ms(10);
+	nrf_gpio_pin_set(17);
+	nrf_gpio_pin_clear(17);
+	nrf_delay_ms(1);	
+	
+	nrf_gpio_cfg_default(2);
+	nrf_gpio_cfg_default(3);
+	nrf_gpio_cfg_default(4);
+	nrf_gpio_cfg_default(5);
+	nrf_gpio_cfg_default(6);
+	nrf_gpio_cfg_default(7);
+	nrf_gpio_cfg_default(8);
+	nrf_gpio_cfg_default(9);
+	nrf_gpio_cfg_default(10);
+	
+//	nrf_gpio_cfg_default(14);
+	nrf_gpio_cfg_default(15);
+	nrf_gpio_cfg_default(16);
+	
+	nrf_gpio_cfg_default(17);
+//	nrf_gpio_cfg_default(18);
+
+		
+	nrf_gpio_cfg_default(25);			//LED1
+	nrf_gpio_cfg_default(26);			//LED2		
+	nrf_gpio_cfg_default(27);	
+	nrf_gpio_cfg_default(31);	
+	
+	
 
     // Prepare wakeup buttons.
     err_code = bsp_btn_ble_sleep_mode_prepare();
@@ -1037,7 +1077,7 @@ void throughput_test()
 
 
 
-#include "nrf_delay.h"
+
 #include "ADS1299_Library.h"
 
 

@@ -26,7 +26,10 @@ void spi_event_handler(nrf_drv_spi_evt_t const * p_event,
 	spi_xfer_done = true;
 }
 
-
+void SPI_uninit()
+{
+	nrf_drv_spi_uninit(&spi);
+}
 
 void SPI_User_init(void)
 {

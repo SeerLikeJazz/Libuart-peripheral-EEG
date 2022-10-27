@@ -3,6 +3,10 @@
 ![](/Image/PCB_board.jpg)  
 
 ## 更新记录
+### 22.10.27
+- 休眠25uA，还可以降低；nrf_gpio_cfg_default(AVDD_EN)屏蔽以后，7uA
+- RESET引脚设置为普通GPIO模式，用于开关机
+
 ### 22.10.12
 - NFC引脚设置为普通GPIO模式
 - 添加并修改matlab plot 代码

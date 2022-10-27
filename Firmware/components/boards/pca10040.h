@@ -70,7 +70,7 @@ extern "C" {
 #define BUTTONS_NUMBER 4
 
 #define BUTTON_START   13
-#define BUTTON_1       13
+#define BUTTON_1       21
 #define BUTTON_2       14
 #define BUTTON_3       15
 #define BUTTON_4       16
