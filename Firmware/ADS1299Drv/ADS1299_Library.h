@@ -10,10 +10,7 @@ insert header here
 #include <stdint.h>
 
 
-#define  SPI_SS_PIN    								  6
-#define  SPI_SCK_PIN   								  5
-#define  SPI_MISO_PIN								    4
-#define  SPI_MOSI_PIN 								  10
+
 
 enum 
 {
@@ -35,6 +32,7 @@ typedef enum {
 
 
 void SPI_User_init(void);
+void SPI_uninit();
 
 void initialize_ads(SAMPLE_RATE sr);
 void ADS_ModeSelect(uint8_t mode);

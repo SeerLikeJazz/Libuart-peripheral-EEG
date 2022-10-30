@@ -3,6 +3,11 @@
 ![](/Image/PCB_board.jpg)  
 
 ## 更新记录
+### 22.10.29
+- 添加driver_power.c
+- define 定义引脚
+- 修改connection_buttons_configure()函数，蓝牙连接后也可以关机
+
 ### 22.10.27
 - 休眠25uA，还可以降低；nrf_gpio_cfg_default(AVDD_EN)屏蔽以后，7uA
 - RESET引脚设置为普通GPIO模式，用于开关机

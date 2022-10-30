@@ -46,6 +46,21 @@ extern "C" {
 
 #include "nrf_gpio.h"
 
+//电源控制引脚	
+#define DVDD_EN_PIN						17
+#define AVDD_EN_PIN						18
+//ADS1299引脚
+#define SPI_SS_PIN    				6
+#define SPI_SCK_PIN   				5
+#define SPI_MISO_PIN					4
+#define SPI_MOSI_PIN 					10
+#define	DRDY_PIN							3
+#define ADS_START_PIN         7         
+#define ADS_RESET_PIN         8
+#define ADS_PWDN_PIN          9
+
+	
+
 // LEDs definitions for PCA10040
 #define LEDS_NUMBER    4
 

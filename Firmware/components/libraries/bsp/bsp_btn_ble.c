@@ -108,7 +108,7 @@ static uint32_t connection_buttons_configure()
 
     err_code = bsp_event_to_button_action_assign(BTN_ID_SLEEP,
                                                  BTN_ACTION_SLEEP,
-                                                 BSP_EVENT_DEFAULT);
+                                                 BSP_EVENT_SLEEP);
     RETURN_ON_ERROR_NOT_INVALID_PARAM(err_code);
 
     err_code = bsp_event_to_button_action_assign(BTN_ID_WHITELIST_OFF,

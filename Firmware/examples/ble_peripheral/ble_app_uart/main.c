@@ -106,9 +106,8 @@
 #include "nrf_queue.h"
 #include "nrf_drv_gpiote.h"
 
-#define	 DRDY_PIN								3
-
-
+#include "ADS1299_Library.h"
+#include "driver_power.h"
 
 
 
@@ -446,10 +445,7 @@ static void sleep_mode_enter(void)
 	nrf_gpio_pin_clear(18);
 	
 	nrf_gpio_pin_clear(17);
-	nrf_delay_ms(10);
-	nrf_gpio_pin_set(17);
-	nrf_gpio_pin_clear(17);
-	nrf_delay_ms(1);	
+	nrf_delay_ms(10);	
 	
 	nrf_gpio_cfg_default(2);
 	nrf_gpio_cfg_default(3);
@@ -1119,31 +1115,21 @@ int main(void)
     log_init();	
     timers_init();
 /*3V3电源打开*/
-	nrf_gpio_cfg_output(17);//DVDD_EN
-	nrf_delay_us(10);
-	for(uint8_t i=0; i<7; i++)
-	{
-		nrf_gpio_pin_set(17);
-		nrf_delay_us(500);	
-		nrf_gpio_pin_clear(17);
-		nrf_delay_us(100);	
-	}	
-	nrf_gpio_pin_set(17);
+    cpc_ldo1_enable();
 /*5v电源打开*/
-	nrf_gpio_cfg_output(18);//AVDD_EN
-	nrf_gpio_pin_set(18);//AVDD_EN
+		AVDD_enable();
 /*ADS1292的gpio初始化*/	
 
 	
-	nrf_gpio_cfg_output(6);//SPI_SS_PIN
-	nrf_gpio_cfg_output(7);//ADS_START
-	nrf_gpio_cfg_output(8);//ADS_RESET
-	nrf_gpio_cfg_output(9);//ADS_PWDN
+	nrf_gpio_cfg_output(SPI_SS_PIN);//SPI_SS_PIN
+	nrf_gpio_cfg_output(ADS_START_PIN);//ADS_START
+	nrf_gpio_cfg_output(ADS_RESET_PIN);//ADS_RESET
+	nrf_gpio_cfg_output(ADS_PWDN_PIN);//ADS_PWDN
 	
-	nrf_gpio_pin_set(6);//CS高电平
-	nrf_gpio_pin_set(9);//PWDN高电平
-	nrf_gpio_pin_set(8);//RESET高电平
-	nrf_gpio_pin_clear(7);//START低电平	
+	nrf_gpio_pin_set(SPI_SS_PIN);//CS高电平
+	nrf_gpio_pin_set(ADS_PWDN_PIN);//PWDN高电平
+	nrf_gpio_pin_set(ADS_RESET_PIN);//RESET高电平
+	nrf_gpio_pin_clear(ADS_START_PIN);//START低电平	
 	
 	SPI_User_init();
 	initialize_ads(SAMPLE_RATE_250);
