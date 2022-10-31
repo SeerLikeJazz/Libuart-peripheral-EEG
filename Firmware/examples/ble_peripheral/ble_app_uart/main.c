@@ -470,8 +470,8 @@ static void sleep_mode_enter(void)
 	nrf_gpio_cfg_default(27);	
 	nrf_gpio_cfg_default(31);	
 	
-	
-
+		//准备充电器接入唤醒
+		nrf_gpio_cfg_sense_set(CHARGE_VCHECK_PIN,NRF_GPIO_PIN_SENSE_HIGH);		//充电器接入高电平触发->唤醒
     // Prepare wakeup buttons.
     err_code = bsp_btn_ble_sleep_mode_prepare();
     APP_ERROR_CHECK(err_code);
@@ -1119,8 +1119,6 @@ int main(void)
 /*5v电源打开*/
 		AVDD_enable();
 /*ADS1292的gpio初始化*/	
-
-	
 	nrf_gpio_cfg_output(SPI_SS_PIN);//SPI_SS_PIN
 	nrf_gpio_cfg_output(ADS_START_PIN);//ADS_START
 	nrf_gpio_cfg_output(ADS_RESET_PIN);//ADS_RESET
@@ -1134,8 +1132,10 @@ int main(void)
 	SPI_User_init();
 	initialize_ads(SAMPLE_RATE_250);
 	ADS_ModeSelect(InternalShort);
-		//配置引脚中断
+	//配置引脚中断
 	drdy_pin_init();
+/*充电引脚初始化*/	
+	ChargerPin_Init();
 	
 
     buttons_leds_init(&erase_bonds);

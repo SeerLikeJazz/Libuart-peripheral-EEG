@@ -14,6 +14,8 @@ void AVDD_disable(void);
 void cpc_ldo1_enable(void);
 void cpc_ldo1_disable(void);
 
+void ChargerPin_Init(void);
+
 
 
 #endif

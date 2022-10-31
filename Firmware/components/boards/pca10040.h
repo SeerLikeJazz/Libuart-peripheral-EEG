@@ -46,6 +46,9 @@ extern "C" {
 
 #include "nrf_gpio.h"
 
+	
+#define	CHARGE_VCHECK_PIN     19
+#define CHARGE_STA_PIN        20
 //电源控制引脚	
 #define DVDD_EN_PIN						17
 #define AVDD_EN_PIN						18
