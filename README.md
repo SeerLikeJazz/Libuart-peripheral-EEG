@@ -3,6 +3,9 @@
 ![](/Image/PCB_board.jpg)  
 
 ## 更新记录
+### 22.11.03
+- 定时器charging_timer检测 开机唤醒充电或中途充电 充电器的拔出与充满
+
 ### 22.11.02
 - 充电器插入检测、充满检测
 - 充电红灯闪烁（BSP_INDICATE_USER_STATE_3），充满绿灯常亮（BSP_INDICATE_USER_STATE_1）。bsp_indication_set()使用前记得bsp_board_leds_off()其他led

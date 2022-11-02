@@ -46,7 +46,9 @@ extern "C" {
 
 #include "nrf_gpio.h"
 
-	
+//按键引脚
+#define KEY_EXIT_PIN          21
+//充电相关引脚	
 #define	CHARGE_VCHECK_PIN     19
 #define CHARGE_STA_PIN        20
 //电源控制引脚	

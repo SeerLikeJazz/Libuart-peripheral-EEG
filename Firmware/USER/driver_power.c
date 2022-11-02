@@ -5,7 +5,6 @@
 
 
 
-
 /*
 	模拟电源使能端
 */
@@ -57,3 +56,6 @@ void ChargerPin_Init(void)
 	nrf_gpio_cfg_input(CHARGE_VCHECK_PIN,NRF_GPIO_PIN_NOPULL);	//充电检测，接5V/2=2.5v
   nrf_gpio_cfg_input(CHARGE_STA_PIN,NRF_GPIO_PIN_NOPULL);   
 }
+
+
+

@@ -176,6 +176,8 @@ uint8_t m_data_array[6300];
 uint32_t m_len_sent;
 uint32_t m_cnt_7ms;
 
+APP_TIMER_DEF(charging_timer);
+
 /**@brief Function for assert macro callback.
  *
  * @details This function will be called in case of an assert in the SoftDevice.
@@ -1076,18 +1078,45 @@ void throughput_test()
 
 #include "ADS1299_Library.h"
 
+/*
+	检测充电器拔出与充满
+*/
+void ChargerUnplug_or_FullyCharged(void)
+{
+			/*充电时读取VCHECK引脚，检测充电器拔出*/
+		if(nrf_gpio_pin_read(CHARGE_VCHECK_PIN) == 0) {
+			sleep_mode_enter();
+		}
+		/*充电时读取STA引脚，检测是否充满*/
+		if(nrf_gpio_pin_read(CHARGE_STA_PIN) == 1) {
+			bsp_indication_set(BSP_INDICATE_USER_STATE_1);			
+		}
+}
 
+static void charging_timer_handler(void * p_context)
+{
+	ChargerUnplug_or_FullyCharged();
+}
 
+/*
+	引脚中断函数
+*/
 void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
 
 	if(pin == DRDY_PIN){
-		updateBoardData();
-		
+		updateBoardData();		
+	}
+	if(pin == CHARGE_VCHECK_PIN){
+		bsp_indication_set(BSP_INDICATE_USER_STATE_3);
+		app_timer_start(charging_timer, APP_TIMER_TICKS(20),NULL);
 	}
 		
 }
 
+/*
+	DRDY引脚中断配置
+*/
 void drdy_pin_init(void)
 {
 	ret_code_t err_code;
@@ -1102,9 +1131,29 @@ void drdy_pin_init(void)
 	APP_ERROR_CHECK(err_code);
 	//使能
 //	nrf_drv_gpiote_in_event_enable(DRDY_PIN, true);
+}
 
+/*
+	充电引脚中断配置
+*/
+void Vcheck_pin_init(void)
+{
+	ret_code_t err_code;
+	//配置SENSE模式，选择fales为sense配置
+	nrf_drv_gpiote_in_config_t in_config = NRFX_GPIOTE_CONFIG_IN_SENSE_LOTOHI(true);
+	in_config.pull = NRF_GPIO_PIN_NOPULL;	
+	//配置INT-KEY绑定POTR
+	err_code = nrf_drv_gpiote_in_init(CHARGE_VCHECK_PIN, &in_config, in_pin_handler);
+	APP_ERROR_CHECK(err_code);
+	//使能
+	nrf_drv_gpiote_in_event_enable(CHARGE_VCHECK_PIN,true);
 
 }
+
+
+
+
+
 
 /**@brief Application main function.
  */
@@ -1149,28 +1198,19 @@ int main(void)
     conn_params_init();
 		
 /*充电还是按键开机*/		
-uint8_t setupcheck=0;
-nrf_delay_ms(50);
-setupcheck = nrf_gpio_pin_read(CHARGE_VCHECK_PIN);
-if(setupcheck==1) {//充电器插入唤醒
-	bsp_indication_set(BSP_INDICATE_USER_STATE_3);
-	while(1) {
-		/*充电时读取VCHECK引脚，检测充电器拔出*/
-		if(nrf_gpio_pin_read(CHARGE_VCHECK_PIN) == 0) {
-			sleep_mode_enter();
+		app_timer_create(&charging_timer, APP_TIMER_MODE_REPEATED, charging_timer_handler);
+		uint8_t setupcheck=0;
+		nrf_delay_ms(50);
+		setupcheck = nrf_gpio_pin_read(CHARGE_VCHECK_PIN);
+		if(setupcheck==1) {//充电器插入唤醒
+			bsp_indication_set(BSP_INDICATE_USER_STATE_3);
+			app_timer_start(charging_timer, APP_TIMER_TICKS(20),NULL);
+			while(1);
 		}
-		/*充电时读取STA引脚，检测是否充满*/
-		if(nrf_gpio_pin_read(CHARGE_STA_PIN) == 1) {
-			bsp_indication_set(BSP_INDICATE_USER_STATE_1);			
-		}
-			
-	
-	}
-}
-else
-{
 
-}
+/*充电引脚中断配置*/
+		Vcheck_pin_init();
+
 
 		conn_evt_len_ext_set();
     // Start execution.
