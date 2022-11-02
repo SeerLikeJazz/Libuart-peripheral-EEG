@@ -3,6 +3,10 @@
 ![](/Image/PCB_board.jpg)  
 
 ## 更新记录
+### 22.11.02
+- 充电器插入检测、充满检测
+- 充电红灯闪烁（BSP_INDICATE_USER_STATE_3），充满绿灯常亮（BSP_INDICATE_USER_STATE_1）。bsp_indication_set()使用前记得bsp_board_leds_off()其他led
+
 ### 22.10.31
 - 充电器插入唤醒
 - 充电相关引脚初始化

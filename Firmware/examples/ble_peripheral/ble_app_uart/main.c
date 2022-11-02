@@ -1147,11 +1147,38 @@ int main(void)
     services_init();
     advertising_init();
     conn_params_init();
+		
+/*充电还是按键开机*/		
+uint8_t setupcheck=0;
+nrf_delay_ms(50);
+setupcheck = nrf_gpio_pin_read(CHARGE_VCHECK_PIN);
+if(setupcheck==1) {//充电器插入唤醒
+	bsp_indication_set(BSP_INDICATE_USER_STATE_3);
+	while(1) {
+		/*充电时读取VCHECK引脚，检测充电器拔出*/
+		if(nrf_gpio_pin_read(CHARGE_VCHECK_PIN) == 0) {
+			sleep_mode_enter();
+		}
+		/*充电时读取STA引脚，检测是否充满*/
+		if(nrf_gpio_pin_read(CHARGE_STA_PIN) == 1) {
+			bsp_indication_set(BSP_INDICATE_USER_STATE_1);			
+		}
+			
+	
+	}
+}
+else
+{
+
+}
 
 		conn_evt_len_ext_set();
     // Start execution.
     NRF_LOG_INFO("Debug logging for UART over RTT started.");
     advertising_start(erase_bonds);
+//bsp_board_leds_off();
+//bsp_indication_set(BSP_INDICATE_USER_STATE_3);
+//bsp_indication_set(BSP_INDICATE_USER_STATE_1);
 
 //		throughput_test();
     // Enter main loop.

@@ -416,7 +416,24 @@ static uint32_t bsp_led_indication(bsp_indication_t indicate)
             break;
 
         case BSP_INDICATE_USER_STATE_3:
+            if (bsp_board_led_state_get(BSP_BOARD_LED_2))
+            {
+                bsp_board_led_off(BSP_BOARD_LED_2);
+                next_delay = indicate ==
+                             BSP_INDICATE_USER_STATE_3 ? ADVERTISING_LED_OFF_INTERVAL :
+                             ADVERTISING_SLOW_LED_OFF_INTERVAL;
+            }
+            else
+            {
+                bsp_board_led_on(BSP_BOARD_LED_2);
+                next_delay = indicate ==
+                             BSP_INDICATE_USER_STATE_3 ? ADVERTISING_LED_ON_INTERVAL :
+                             ADVERTISING_SLOW_LED_ON_INTERVAL;
+            }
 
+            m_stable_state = indicate;
+            err_code       = app_timer_start(m_bsp_leds_tmr, APP_TIMER_TICKS(next_delay), NULL);
+            break;
         case BSP_INDICATE_USER_STATE_ON:
             bsp_board_leds_on();
             m_stable_state = indicate;
