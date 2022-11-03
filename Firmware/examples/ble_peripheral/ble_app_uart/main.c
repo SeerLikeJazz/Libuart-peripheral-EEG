@@ -161,7 +161,7 @@ static ble_uuid_t m_adv_uuids[]          =                                      
 
 
 /**
-**custom code
+**自定义代码
 **/
 void ble_data_send_with_queue(void);
 typedef struct {
@@ -176,7 +176,10 @@ uint8_t m_data_array[6300];
 uint32_t m_len_sent;
 uint32_t m_cnt_7ms;
 
+//充电用定时器
 APP_TIMER_DEF(charging_timer);
+//用来标记是否广播
+static  bool adv_started = false;
 
 /**@brief Function for assert macro callback.
  *
@@ -499,6 +502,7 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
         case BLE_ADV_EVT_FAST:
             err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
             APP_ERROR_CHECK(err_code);
+						adv_started = true;
             break;
         case BLE_ADV_EVT_IDLE:
             sleep_mode_enter();
@@ -658,7 +662,7 @@ void bsp_event_handler(bsp_event_t event)
     {
         case BSP_EVENT_SLEEP:
 					bsp_indication_set(BSP_INDICATE_IDLE);
-					KeyExit_pin_init();
+					KeyExit_pin_init();//配置关机引脚中断
 //            sleep_mode_enter();
             break;
 
@@ -1081,12 +1085,14 @@ void throughput_test()
 
 #include "ADS1299_Library.h"
 
+
+uint8_t FullyCharge_count = 0;
 /*
 	检测充电器拔出与充满
 */
-uint8_t FullyCharge_count = 0;
 void ChargerUnplug_or_FullyCharged(void)
 {
+		ret_code_t err_code;
 			/*充电时读取VCHECK引脚，检测充电器拔出*/
 		if(nrf_gpio_pin_read(CHARGE_VCHECK_PIN) == 0) {
 			sleep_mode_enter();
@@ -1098,24 +1104,26 @@ void ChargerUnplug_or_FullyCharged(void)
 				bsp_indication_set(BSP_INDICATE_USER_STATE_1);
 			}						
 		}
+		/**/
+		if(adv_started == true) {//广播已经启动
+		  err_code = sd_ble_gap_adv_stop(m_advertising.adv_handle);
+		  if(err_code == NRF_SUCCESS)
+		  {
+			  adv_started = false;
+			  //调整指示灯
+				bsp_board_leds_off();
+				bsp_indication_set(BSP_INDICATE_USER_STATE_3);//充电红灯闪烁
+		  }
+		}
+				
 }
 
+/*
+	充电定时器函数，500ms进入一次
+*/
 static void charging_timer_handler(void * p_context)
 {
 	ChargerUnplug_or_FullyCharged();
-}
-
-
-void user_ble_diconnect(void)
-{
-	uint32_t err_code;
-  err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_CONN_INTERVAL_UNACCEPTABLE);
-	APP_ERROR_CHECK(err_code);	
-}
-static void advertising_stop(void)
-{
-   uint32_t err_code = sd_ble_gap_adv_stop(m_advertising.adv_handle);
-    APP_ERROR_CHECK(err_code);
 }
 
 /*
@@ -1123,15 +1131,28 @@ static void advertising_stop(void)
 */
 void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
+	ret_code_t err_code;
 
 	if(pin == DRDY_PIN){
 		updateBoardData();		
 	}
 	if(pin == CHARGE_VCHECK_PIN){
-//		advertising_stop();//断开广播
-//		user_ble_diconnect();//断开蓝牙连接
+		if(m_conn_handle == BLE_HCI_STATUS_CODE_SUCCESS) {//连接已经建立
+			err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);//断开蓝牙连接
+			APP_ERROR_CHECK(err_code);
+		}
+		if((adv_started == true) && (m_conn_handle == BLE_CONN_HANDLE_INVALID)) {//连接未建立，广播已经启动
+			err_code = sd_ble_gap_adv_stop(m_advertising.adv_handle);
+			if(err_code == NRF_SUCCESS)
+			{
+				adv_started = false;
+			}
+
+		}
+		//调整指示灯
 		bsp_board_leds_off();
-		bsp_indication_set(BSP_INDICATE_USER_STATE_3);
+		bsp_indication_set(BSP_INDICATE_USER_STATE_3);//充电红灯闪烁
+		//打开定时器
 		app_timer_start(charging_timer, APP_TIMER_TICKS(500),NULL);
 	}
 	if(pin == KEY_EXIT_PIN){
@@ -1260,9 +1281,6 @@ int main(void)
     // Start execution.
     NRF_LOG_INFO("Debug logging for UART over RTT started.");
     advertising_start(erase_bonds);
-//bsp_board_leds_off();
-//bsp_indication_set(BSP_INDICATE_USER_STATE_3);
-//bsp_indication_set(BSP_INDICATE_USER_STATE_1);
 		
 
 //		throughput_test();
