@@ -117,10 +117,10 @@ static uint32_t connection_buttons_configure()
     RETURN_ON_ERROR_NOT_INVALID_PARAM(err_code);
 
 
-    err_code = bsp_event_to_button_action_assign(BTN_ID_DISCONNECT,
-                                                 BTN_ACTION_DISCONNECT,
-                                                 BSP_EVENT_DISCONNECT);
-    RETURN_ON_ERROR_NOT_INVALID_PARAM(err_code);
+//    err_code = bsp_event_to_button_action_assign(BTN_ID_DISCONNECT,
+//                                                 BTN_ACTION_DISCONNECT,
+//                                                 BSP_EVENT_DISCONNECT);
+//    RETURN_ON_ERROR_NOT_INVALID_PARAM(err_code);
 
     return NRF_SUCCESS;
 }
