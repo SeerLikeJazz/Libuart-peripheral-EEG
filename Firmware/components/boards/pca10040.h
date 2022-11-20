@@ -45,6 +45,10 @@ extern "C" {
 #endif
 
 #include "nrf_gpio.h"
+	
+	
+#define DFU_MODE_ENABLE    0   //是否加上DFU功能，0，不加入，用于测试模式，1 加入，用于正式版本	
+	
 
 //按键引脚
 #define KEY_EXIT_PIN          21

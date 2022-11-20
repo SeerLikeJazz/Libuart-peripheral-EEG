@@ -2,7 +2,16 @@
 8 ch signals send by BLE   
 ![](/Image/PCB_board.jpg)  
 
+
+## 待完成
+- DFU模式下，无法按键关机？？？
+- 电池电量监测
+- 各种状态下功耗验证
+
 ## 更新记录
+### 22.11.20
+- 增加DFU服务，用宏定义控制是否使能。
+
 ### 22.11.16
 - fix：蓝牙连接后长按无法关机。修改connection_buttons_configure()函数
 

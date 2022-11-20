@@ -338,6 +338,7 @@ static void ble_dfu_evt_handler(ble_dfu_buttonless_evt_type_t event)
     }
 }
 
+#if(DFU_MODE_ENABLE)
 static void user_dfu_init(void)
 {
   uint32_t           err_code;	
@@ -348,6 +349,7 @@ static void user_dfu_init(void)
     err_code = ble_dfu_buttonless_init(&dfus_init);
     APP_ERROR_CHECK(err_code);
 }
+#endif
 
 /**@brief Function for initializing services that will be used by the application.
  */
@@ -372,7 +374,9 @@ static void services_init(void)
     APP_ERROR_CHECK(err_code);
 		
 		//Initialize DFU
-//		user_dfu_init();
+		#if(DFU_MODE_ENABLE)
+		user_dfu_init();
+		#endif
 }
 
 
