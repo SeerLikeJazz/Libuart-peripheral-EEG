@@ -134,6 +134,32 @@ uint8_t ADS_RREG(uint8_t _address)
 
   return regData[_address]; // return requested register value
 }
+
+/**
+  * @brief  低功耗模式
+	* @param  target_SS 选择对应的ADS1299
+  * @retval None
+  */
+void ADS_STANDBY(void)
+{
+  csLow();
+  ADS_xfer(_STANDBY);
+  nrf_delay_ms(1); //must wait 18 tCLK cycles to execute this command (Datasheet, pg. 35)
+  csHigh();
+}
+
+/**
+  * @brief  从Standby模式唤醒
+	* @param  target_SS 选择对应的ADS1299
+  * @retval None
+  */
+void ADS_WAKEUP(void)
+{ // reset all the registers to default settings
+  csLow();
+  ADS_xfer(_WAKEUP);
+  csHigh();
+	nrf_delay_ms(1); //must wait at least 4 tCLK cycles after executing this command (Datasheet, pg. 37)
+}
 /**
   * @brief  复位
 	* @param  target_SS 选择对应的ADS1299
@@ -392,31 +418,35 @@ void ADS_ModeSelect(uint8_t mode)
 /**
  * ADS运行模式选择
  * */
+bool Is_standby = true;
 void ADS_state_choose(uint8_t EEG_State)
 {
-
+	
+		if(Is_standby){
+			ADS_WAKEUP();
+		}
+		ADS_SDATAC();//停止连续读模式
     switch(EEG_State) {
         case IMPEDANCING:
-            initialize_ads(SAMPLE_RATE_500);
             ADS_ModeSelect(Impedance);
             break;
 
         case WAVE:
-            initialize_ads(SAMPLE_RATE_500);
             ADS_ModeSelect(Normal);
             break;
 
         case INTERNALSHORT:
-            initialize_ads(SAMPLE_RATE_500);
             ADS_ModeSelect(InternalShort);
             break;
 
         case TESTSIGAL:
-            initialize_ads(SAMPLE_RATE_500);
             ADS_ModeSelect(TestSignal);
-
             break;
-        case STOP:;
+				
+        case STOP:
+						ADS_STANDBY();//进入低功耗模式
+						Is_standby = true;
+						break;
 
         default:;
     }

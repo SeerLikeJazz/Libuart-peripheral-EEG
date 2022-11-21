@@ -51,10 +51,10 @@ uint8_t ADS_RREG(uint8_t _address);            // read one ADS register
 //void    RREGS(byte,byte,int);      // read multiple ADS registers
 void ADS_SDATAC(void);  // get out of read data continuous mode
 
-//void    STANDBY(int); // go into low power mode
+void    ADS_STANDBY(void); // go into low power mode
 void    ADS_START(void);   // start data acquisition
 //void    STOP(int);    // stop data acquisition
-//void    WAKEUP(int);  // get out of low power mode
+void    ADS_WAKEUP(void);  // get out of low power mode
 void ADS_WREG(uint8_t _address, uint8_t _value);       // write one ADS register
 //void    WREGS(byte,byte,int);      // write multiple ADS registers
 uint8_t    ADS_xfer(uint8_t byte);        // SPI Transfer function

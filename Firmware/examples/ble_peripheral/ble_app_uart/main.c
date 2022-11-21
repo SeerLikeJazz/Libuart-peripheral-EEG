@@ -109,7 +109,7 @@
 #include "ADS1299_Library.h"
 #include "driver_power.h"
 
-
+#include "data_struct.h"
 
 #define APP_BLE_CONN_CFG_TAG            1                                           /**< A tag identifying the SoftDevice BLE configuration. */
 
@@ -180,8 +180,10 @@ uint32_t m_cnt_7ms;
 APP_TIMER_DEF(charging_timer);
 //系统检测用定时器（指令是否更新）
 APP_TIMER_DEF(system_task_timer);
-//用来标记是否广播
-static  bool adv_started = false;
+//全局参数
+DEVICE_PARA DevicePara;   
+
+
 
 /**@brief Function for assert macro callback.
  *
@@ -199,13 +201,7 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
     app_error_handler(DEAD_BEEF, line_num, p_file_name);
 }
 
-/**@brief Function for initializing the timer module.
- */
-static void timers_init(void)
-{
-    ret_code_t err_code = app_timer_init();
-    APP_ERROR_CHECK(err_code);
-}
+
 
 /**@brief Function for the GAP initialization.
  *
@@ -251,7 +247,7 @@ static void nrf_qwr_error_handler(uint32_t nrf_error)
 
 
 
-uint8_t RXbuff[10];
+
 /**@brief Function for handling the data from the Nordic UART Service.
  *
  * @details This function will process the data received from the Nordic UART BLE Service and send
@@ -260,6 +256,7 @@ uint8_t RXbuff[10];
  * @param[in] p_evt       Nordic UART Service event.
  */
 /**@snippet [Handling the data received over BLE] */
+uint8_t RXbuff[10];
 static void nus_data_handler(ble_nus_evt_t * p_evt)
 {
     if (p_evt->type == BLE_NUS_EVT_RX_DATA)
@@ -268,11 +265,12 @@ static void nus_data_handler(ble_nus_evt_t * p_evt)
 
         NRF_LOG_DEBUG("Received data from BLE NUS. Writing data on UART.");
         NRF_LOG_HEXDUMP_DEBUG(p_evt->params.rx_data.p_data, p_evt->params.rx_data.length);
-
-        for (uint32_t i = 0; i < p_evt->params.rx_data.length; i++)
-        {
-					RXbuff[i] = p_evt->params.rx_data.p_data[i];
-        }
+				if(p_evt->params.rx_data.length < 10) {//防止接收数组超出范围
+					for (uint32_t i = 0; i < p_evt->params.rx_data.length; i++)
+					{
+						RXbuff[i] = p_evt->params.rx_data.p_data[i];
+					}
+				}
     }
 		else if (p_evt->type == BLE_NUS_EVT_COMM_STARTED)
 		{
@@ -437,39 +435,8 @@ static void sleep_mode_enter(void)
     uint32_t err_code = bsp_indication_set(BSP_INDICATE_IDLE);
     APP_ERROR_CHECK(err_code);
 	
-	//关闭耗电的部分
-	app_timer_stop_all();
-	nrf_gpio_pin_clear(9); //1299芯片	PWDN
-	SPI_uninit();
-	
-	
-	nrf_gpio_pin_clear(18);
-	
-	nrf_gpio_pin_clear(17);
-	nrf_delay_ms(10);	
-	
-	nrf_gpio_cfg_default(2);
-	nrf_gpio_cfg_default(3);
-	nrf_gpio_cfg_default(4);
-	nrf_gpio_cfg_default(5);
-	nrf_gpio_cfg_default(6);
-	nrf_gpio_cfg_default(7);
-	nrf_gpio_cfg_default(8);
-	nrf_gpio_cfg_default(9);
-	nrf_gpio_cfg_default(10);
-	
-//	nrf_gpio_cfg_default(14);
-	nrf_gpio_cfg_default(15);
-	nrf_gpio_cfg_default(16);
-	
-	nrf_gpio_cfg_default(17);
-//	nrf_gpio_cfg_default(18);
-
-		
-	nrf_gpio_cfg_default(25);			//LED1
-	nrf_gpio_cfg_default(26);			//LED2		
-	nrf_gpio_cfg_default(27);	
-	nrf_gpio_cfg_default(31);	
+		//关闭耗电的部分
+		prepare_before_sleep();
 	
 		//准备充电器接入唤醒
 		nrf_gpio_cfg_sense_set(CHARGE_VCHECK_PIN,NRF_GPIO_PIN_SENSE_HIGH);		//充电器接入高电平触发->唤醒
@@ -498,7 +465,7 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
         case BLE_ADV_EVT_FAST:
             err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
             APP_ERROR_CHECK(err_code);
-						adv_started = true;
+						DevicePara.adv_started = true;
             break;
         case BLE_ADV_EVT_IDLE:
             sleep_mode_enter();
@@ -1101,11 +1068,11 @@ void ChargerUnplug_or_FullyCharged(void)
 			}						
 		}
 		/**/
-		if(adv_started == true) {//广播已经启动
+		if(DevicePara.adv_started == true) {//广播已经启动
 		  err_code = sd_ble_gap_adv_stop(m_advertising.adv_handle);
 		  if(err_code == NRF_SUCCESS)
 		  {
-			  adv_started = false;
+			  DevicePara.adv_started = false;
 			  //调整指示灯
 				bsp_board_leds_off();
 				bsp_indication_set(BSP_INDICATE_USER_STATE_3);//充电红灯闪烁
@@ -1133,6 +1100,24 @@ static void system_task_timer_handler(void * p_context)
 		memset(RXbuff,0,sizeof(RXbuff));
 		app_timer_start(system_task_timer, APP_TIMER_TICKS(500),NULL);
 	}
+	if(m_conn_handle != BLE_HCI_STATUS_CODE_SUCCESS){//蓝牙未建立连接
+		ADS_SDATAC();//停止连续读模式
+		ADS_STANDBY();//进入低功耗模式		
+	}
+}
+
+/**@brief Function for initializing the timer module.
+ */
+static void timers_init(void)
+{
+    ret_code_t err_code = app_timer_init();
+    APP_ERROR_CHECK(err_code);
+	
+		err_code = app_timer_create(&charging_timer, APP_TIMER_MODE_REPEATED, charging_timer_handler);
+		APP_ERROR_CHECK(err_code);
+	
+		err_code = app_timer_create(&system_task_timer, APP_TIMER_MODE_REPEATED, system_task_timer_handler);
+		APP_ERROR_CHECK(err_code);
 }
 /*
 	引脚中断函数
@@ -1149,11 +1134,11 @@ void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 			err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);//断开蓝牙连接
 			APP_ERROR_CHECK(err_code);
 		}
-		if((adv_started == true) && (m_conn_handle == BLE_CONN_HANDLE_INVALID)) {//连接未建立，广播已经启动
+		if((DevicePara.adv_started == true) && (m_conn_handle == BLE_CONN_HANDLE_INVALID)) {//连接未建立，广播已经启动
 			err_code = sd_ble_gap_adv_stop(m_advertising.adv_handle);
 			if(err_code == NRF_SUCCESS)
 			{
-				adv_started = false;
+				DevicePara.adv_started = false;
 			}
 
 		}
@@ -1233,47 +1218,46 @@ int main(void)
 {
     bool erase_bonds;
     // Initialize.
-    log_init();	
-    timers_init();
+    log_init();	//log打印初始化
+    timers_init();//软件定时器初始化
+		Device_Para_Init(&DevicePara);
 /*3V3电源打开*/
     cpc_ldo1_enable();
 /*5v电源打开*/
 		AVDD_enable();
 /*ADS1292的gpio初始化*/	
-	nrf_gpio_cfg_output(SPI_SS_PIN);//SPI_SS_PIN
-	nrf_gpio_cfg_output(ADS_START_PIN);//ADS_START
-	nrf_gpio_cfg_output(ADS_RESET_PIN);//ADS_RESET
-	nrf_gpio_cfg_output(ADS_PWDN_PIN);//ADS_PWDN
-	
-	nrf_gpio_pin_set(SPI_SS_PIN);//CS高电平
-	nrf_gpio_pin_set(ADS_PWDN_PIN);//PWDN高电平
-	nrf_gpio_pin_set(ADS_RESET_PIN);//RESET高电平
-	nrf_gpio_pin_clear(ADS_START_PIN);//START低电平	
-	
-	SPI_User_init();
-	initialize_ads(SAMPLE_RATE_500);
-	ADS_ModeSelect(InternalShort);
+		nrf_gpio_cfg_output(SPI_SS_PIN);//SPI_SS_PIN
+		nrf_gpio_cfg_output(ADS_START_PIN);//ADS_START
+		nrf_gpio_cfg_output(ADS_RESET_PIN);//ADS_RESET
+		nrf_gpio_cfg_output(ADS_PWDN_PIN);//ADS_PWDN
+		
+		nrf_gpio_pin_set(SPI_SS_PIN);//CS高电平
+		nrf_gpio_pin_set(ADS_PWDN_PIN);//PWDN高电平
+		nrf_gpio_pin_set(ADS_RESET_PIN);//RESET高电平
+		nrf_gpio_pin_clear(ADS_START_PIN);//START低电平	
+		
+		SPI_User_init();
+		initialize_ads(SAMPLE_RATE_500);
+		ADS_STANDBY();//进入低功耗模式
 
 /*充电引脚初始化*/	
-	ChargerPin_Init();
+		ChargerPin_Init();
 	
-
-    buttons_leds_init(&erase_bonds);
-    power_management_init();
-    ble_stack_init();	
+    buttons_leds_init(&erase_bonds);//按键LED灯初始化
+    power_management_init();//能量管理
+    ble_stack_init();	//协议栈初始化
 		peer_manager_init();
-    gap_params_init();
-    gatt_init();
-    services_init();
-    advertising_init();
-    conn_params_init();
+    gap_params_init();//GAP初始化
+    gatt_init();//GATT初始化
+    services_init();//服务初始化
+    advertising_init();//广播初始化
+    conn_params_init();//连接参数更新初始化
 
 /*配置DRDY引脚中断*/
-	drdy_pin_init();
+		drdy_pin_init();
 /*充电还是按键开机*/		
-		app_timer_create(&charging_timer, APP_TIMER_MODE_REPEATED, charging_timer_handler);
-		uint8_t setupcheck=0;
 		nrf_delay_ms(50);
+		uint8_t setupcheck = 0;
 		setupcheck = nrf_gpio_pin_read(CHARGE_VCHECK_PIN);
 		if(setupcheck==1) {//充电器插入唤醒
 			bsp_indication_set(BSP_INDICATE_USER_STATE_3);
@@ -1284,14 +1268,12 @@ int main(void)
 /*充电引脚中断配置*/
 		Vcheck_pin_init();
 /*系统指令接收定时器*/
-		app_timer_create(&system_task_timer, APP_TIMER_MODE_REPEATED, system_task_timer_handler);
 		app_timer_start(system_task_timer, APP_TIMER_TICKS(500),NULL);
 
-
-		conn_evt_len_ext_set();
+		conn_evt_len_ext_set();//连接事件长度扩展
     // Start execution.
     NRF_LOG_INFO("Debug logging for UART over RTT started.");
-    advertising_start(erase_bonds);
+    advertising_start(erase_bonds);//开始广播
 		
 
 //		throughput_test();

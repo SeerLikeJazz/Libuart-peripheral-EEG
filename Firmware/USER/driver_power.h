@@ -15,6 +15,7 @@ void cpc_ldo1_enable(void);
 void cpc_ldo1_disable(void);
 
 void ChargerPin_Init(void);
+void prepare_before_sleep(void);
 
 
 

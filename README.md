@@ -4,11 +4,15 @@
 
 
 ## 待完成
-- 指令收发
+- 指令收发，接收数组别超出
 - 电池电量监测
-- 各种状态下功耗验证：STANDBY-3mA；PWDN-1.26mA；全速工作：15mA
+- 各种状态下功耗验证：STANDBY-3mA；PWDN-1.26mA；全速工作：15mA；待机：7uA
 
 ## 更新记录
+### 22.11.21-2
+- 开机时，进入standby模式，3mA功耗；蓝牙断开连接时，进入standby模式
+- 增加STANDBY和WAKEUP指令
+
 ### 22.11.21-1
 - nus_data_handler服务，接收指令；定时器system_task_timer，500ms处理指令
 - DFU工程修改：LED的状态指示、广播名字
