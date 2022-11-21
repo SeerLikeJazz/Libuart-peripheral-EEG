@@ -10,7 +10,14 @@ insert header here
 #include <stdint.h>
 
 
-
+typedef enum
+{
+    IMPEDANCING    = 'Z',
+    WAVE           = 'W',
+    INTERNALSHORT  = 'S',
+    TESTSIGAL      = 'T',
+    STOP           = 'R'
+} EEG_StateTypeDef ;
 
 enum 
 {
@@ -53,6 +60,7 @@ void ADS_WREG(uint8_t _address, uint8_t _value);       // write one ADS register
 uint8_t    ADS_xfer(uint8_t byte);        // SPI Transfer function
 
 void updateBoardData(void);
+void ADS_state_choose(uint8_t EEG_State);
 
 
 

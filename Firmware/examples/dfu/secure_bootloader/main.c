@@ -112,10 +112,14 @@ static void dfu_observer(nrf_dfu_evt_type_t evt_type)
             bsp_board_led_off(BSP_BOARD_LED_2);
             break;
         case NRF_DFU_EVT_TRANSPORT_ACTIVATED:
+						bsp_board_led_on(BSP_BOARD_LED_0);
             bsp_board_led_off(BSP_BOARD_LED_1);
             bsp_board_led_on(BSP_BOARD_LED_2);
             break;
         case NRF_DFU_EVT_DFU_STARTED:
+						bsp_board_led_off(BSP_BOARD_LED_0);
+            bsp_board_led_on(BSP_BOARD_LED_1);
+            bsp_board_led_on(BSP_BOARD_LED_2);
             break;
         default:
             break;

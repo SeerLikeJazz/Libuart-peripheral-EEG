@@ -4,12 +4,18 @@
 
 
 ## 待完成
+- 指令收发
 - 电池电量监测
-- 各种状态下功耗验证
+- 各种状态下功耗验证：STANDBY-3mA；PWDN-1.26mA；全速工作：15mA
 
 ## 更新记录
+### 22.11.21-1
+- nus_data_handler服务，接收指令；定时器system_task_timer，500ms处理指令
+- DFU工程修改：LED的状态指示、广播名字
+
 ### 22.11.21
 - fix：增加DFU服务后，无法按键关机。 secure_bootloader工程里，需要删去CONFIG_GPIO_AS_PINRESET
+
 ### 22.11.20
 - 增加DFU服务，用宏定义控制是否使能。
 

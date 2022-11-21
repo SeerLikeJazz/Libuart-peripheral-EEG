@@ -178,6 +178,8 @@ uint32_t m_cnt_7ms;
 
 //充电用定时器
 APP_TIMER_DEF(charging_timer);
+//系统检测用定时器（指令是否更新）
+APP_TIMER_DEF(system_task_timer);
 //用来标记是否广播
 static  bool adv_started = false;
 
@@ -248,6 +250,8 @@ static void nrf_qwr_error_handler(uint32_t nrf_error)
 }
 
 
+
+uint8_t RXbuff[10];
 /**@brief Function for handling the data from the Nordic UART Service.
  *
  * @details This function will process the data received from the Nordic UART BLE Service and send
@@ -267,19 +271,7 @@ static void nus_data_handler(ble_nus_evt_t * p_evt)
 
         for (uint32_t i = 0; i < p_evt->params.rx_data.length; i++)
         {
-            do
-            {
-                err_code = app_uart_put(p_evt->params.rx_data.p_data[i]);
-                if ((err_code != NRF_SUCCESS) && (err_code != NRF_ERROR_BUSY))
-                {
-                    NRF_LOG_ERROR("Failed receiving NUS message. Error 0x%x. ", err_code);
-                    APP_ERROR_CHECK(err_code);
-                }
-            } while (err_code == NRF_ERROR_BUSY);
-        }
-        if (p_evt->params.rx_data.p_data[p_evt->params.rx_data.length - 1] == '\r')
-        {
-            while (app_uart_put('\n') == NRF_ERROR_BUSY);
+					RXbuff[i] = p_evt->params.rx_data.p_data[i];
         }
     }
 		else if (p_evt->type == BLE_NUS_EVT_COMM_STARTED)
@@ -1131,6 +1123,18 @@ static void charging_timer_handler(void * p_context)
 }
 
 /*
+	系统检测函数，500ms进入一次
+*/
+static void system_task_timer_handler(void * p_context)
+{
+	if(RXbuff[0]) {
+		app_timer_stop(system_task_timer);
+		ADS_state_choose(RXbuff[0]);
+		memset(RXbuff,0,sizeof(RXbuff));
+		app_timer_start(system_task_timer, APP_TIMER_TICKS(500),NULL);
+	}
+}
+/*
 	引脚中断函数
 */
 void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
@@ -1247,7 +1251,7 @@ int main(void)
 	nrf_gpio_pin_clear(ADS_START_PIN);//START低电平	
 	
 	SPI_User_init();
-	initialize_ads(SAMPLE_RATE_250);
+	initialize_ads(SAMPLE_RATE_500);
 	ADS_ModeSelect(InternalShort);
 
 /*充电引脚初始化*/	
@@ -1279,6 +1283,9 @@ int main(void)
 
 /*充电引脚中断配置*/
 		Vcheck_pin_init();
+/*系统指令接收定时器*/
+		app_timer_create(&system_task_timer, APP_TIMER_MODE_REPEATED, system_task_timer_handler);
+		app_timer_start(system_task_timer, APP_TIMER_TICKS(500),NULL);
 
 
 		conn_evt_len_ext_set();

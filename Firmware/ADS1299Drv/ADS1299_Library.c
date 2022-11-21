@@ -209,7 +209,35 @@ void initialize_ads(SAMPLE_RATE sr)
 	
 	ADS_SDATAC();
 	nrf_delay_ms(10);
-	
+
+    uint8_t output_data_rate;
+    switch(sr) {
+        case SAMPLE_RATE_250:
+            output_data_rate= 0x06;
+            break;
+        case SAMPLE_RATE_500:
+            output_data_rate= 0x05;
+            break;
+        case SAMPLE_RATE_1000:
+            output_data_rate= 0x04;
+            break;
+        case SAMPLE_RATE_2000:
+            break;
+        case SAMPLE_RATE_4000:
+            break;
+        case SAMPLE_RATE_8000:
+            break;
+        case SAMPLE_RATE_16000:
+            break;
+        default:;
+    }
+
+
+	ADS_WREG(CONFIG1,0x90 | output_data_rate);
+	nrf_delay_ms(100);
+	ADS_WREG(CONFIG3,0xEC);
+	nrf_delay_ms(100);
+		
 	if(ADS_getDeviceID() != 0x3E) {
  		while(1);
 	};
@@ -225,87 +253,81 @@ void initialize_ads(SAMPLE_RATE sr)
 void ADS_ModeSelect(uint8_t mode)
 {
 	switch(mode) {
-//		case Impedance:
-//			{
-//				ADS_WREG(LOFF,0x02);
-//				HAL_Delay(10);
+		case Impedance:
+			{
+				ADS_WREG(LOFF,0x02);
+				nrf_delay_ms(10);
 
-//				ADS_WREG(BIAS_SENSP,0xFF);
-//				HAL_Delay(10);
-//				ADS_WREG(BIAS_SENSN,0xFF);
-//				HAL_Delay(10);
-//				ADS_WREG(LOFF_SENSP,0xFF);
-//				HAL_Delay(10);
-//				ADS_WREG(LOFF_SENSN,0x00, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(LOFF_FLIP,0x00, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(MISC1,0x20, BOTH_ADS);//设置SRB1
-//				HAL_Delay(10);
-//				
-//				ADS_WREG(CH1SET,0x60, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH2SET,0x60, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH3SET,0x60, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH4SET,0x60, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH5SET,0x60, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH6SET,0x60, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH7SET,0x60, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH8SET,0x60, BOTH_ADS);
-//				HAL_Delay(10);
-//				
-//				ADS_START(BOTH_ADS);
-//				HAL_Delay(40);
-//				ADS_RDATAC(BOTH_ADS);
-//				HAL_Delay(10);
-//			}
-//			break;
-//		case Normal:
-//			{
-//				ADS_WREG(BIAS_SENSP,0xFF, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(BIAS_SENSN,0xFF, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(MISC1,0x20, BOTH_ADS);//设置SRB1
-//				HAL_Delay(10);
-//				
-//				ADS_WREG(CH1SET,0x60, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH2SET,0x60, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH3SET,0x60, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH4SET,0x60, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH5SET,0x60, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH6SET,0x60, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH7SET,0x60, BOTH_ADS);
-//				HAL_Delay(10);
-//				ADS_WREG(CH8SET,0x60, BOTH_ADS);
-//				HAL_Delay(10);	
-//				
-//				ADS_START(BOTH_ADS);
-//				HAL_Delay(40);
-//				ADS_RDATAC(BOTH_ADS);
-//				HAL_Delay(10);
-//				/*使用DMA前，CS拉低*/
-//			//	csLow(BOTH_ADS);
-//			}
-//			break;
+				ADS_WREG(BIAS_SENSP,0xFF);
+				nrf_delay_ms(10);
+				ADS_WREG(BIAS_SENSN,0xFF);
+				nrf_delay_ms(10);
+				ADS_WREG(LOFF_SENSP,0xFF);
+				nrf_delay_ms(10);
+				ADS_WREG(LOFF_SENSN,0x00);
+				nrf_delay_ms(10);
+				ADS_WREG(LOFF_FLIP,0x00);
+				nrf_delay_ms(10);
+				ADS_WREG(MISC1,0x20);//设置SRB1
+				nrf_delay_ms(10);
+				
+				ADS_WREG(CH1SET,0x60);
+				nrf_delay_ms(10);
+				ADS_WREG(CH2SET,0x60);
+				nrf_delay_ms(10);
+				ADS_WREG(CH3SET,0x60);
+				nrf_delay_ms(10);
+				ADS_WREG(CH4SET,0x60);
+				nrf_delay_ms(10);
+				ADS_WREG(CH5SET,0x60);
+				nrf_delay_ms(10);
+				ADS_WREG(CH6SET,0x60);
+				nrf_delay_ms(10);
+				ADS_WREG(CH7SET,0x60);
+				nrf_delay_ms(10);
+				ADS_WREG(CH8SET,0x60);
+				nrf_delay_ms(10);
+				
+				ADS_START();
+				nrf_delay_ms(40);
+				ADS_RDATAC();
+				nrf_delay_ms(10);
+			}
+			break;
+		case Normal:
+			{
+				ADS_WREG(BIAS_SENSP,0xFF);
+				nrf_delay_ms(10);
+				ADS_WREG(BIAS_SENSN,0xFF);
+				nrf_delay_ms(10);
+				ADS_WREG(MISC1,0x20);//设置SRB1
+				nrf_delay_ms(10);
+				
+				ADS_WREG(CH1SET,0x60);
+				nrf_delay_ms(10);
+				ADS_WREG(CH2SET,0x60);
+				nrf_delay_ms(10);
+				ADS_WREG(CH3SET,0x60);
+				nrf_delay_ms(10);
+				ADS_WREG(CH4SET,0x60);
+				nrf_delay_ms(10);
+				ADS_WREG(CH5SET,0x60);
+				nrf_delay_ms(10);
+				ADS_WREG(CH6SET,0x60);
+				nrf_delay_ms(10);
+				ADS_WREG(CH7SET,0x60);
+				nrf_delay_ms(10);
+				ADS_WREG(CH8SET,0x60);
+				nrf_delay_ms(10);	
+				
+				ADS_START();
+				nrf_delay_ms(40);
+				ADS_RDATAC();
+				nrf_delay_ms(10);
+			}
+			break;
 		case InternalShort:
 			{
-	ADS_WREG(CONFIG3,0xE0);
-	nrf_delay_ms(100);
-	ADS_WREG(CONFIG1,0x95);
-	nrf_delay_ms(100);
 				ADS_WREG(CONFIG2,0xC0);
 				nrf_delay_ms(10);
 								
@@ -367,6 +389,38 @@ void ADS_ModeSelect(uint8_t mode)
 	}
 }
 
+/**
+ * ADS运行模式选择
+ * */
+void ADS_state_choose(uint8_t EEG_State)
+{
+
+    switch(EEG_State) {
+        case IMPEDANCING:
+            initialize_ads(SAMPLE_RATE_500);
+            ADS_ModeSelect(Impedance);
+            break;
+
+        case WAVE:
+            initialize_ads(SAMPLE_RATE_500);
+            ADS_ModeSelect(Normal);
+            break;
+
+        case INTERNALSHORT:
+            initialize_ads(SAMPLE_RATE_500);
+            ADS_ModeSelect(InternalShort);
+            break;
+
+        case TESTSIGAL:
+            initialize_ads(SAMPLE_RATE_500);
+            ADS_ModeSelect(TestSignal);
+
+            break;
+        case STOP:;
+
+        default:;
+    }
+}
 
 
 int  boardStat;
@@ -433,15 +487,6 @@ void updateBoardData(void)
 	
 
 }
-
-
-
-
-
-
-
-
-
 
 
 
