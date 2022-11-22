@@ -745,6 +745,7 @@ static void uart_init(void)
 }
 /**@snippet [UART Initialization] */
 
+#define TX_POWER_LEVEL                  (4)
 
 /**@brief Function for initializing the Advertising functionality.
  */
@@ -752,13 +753,14 @@ static void advertising_init(void)
 {
     uint32_t               err_code;
     ble_advertising_init_t init;
-
+		int8_t        tx_power_level = TX_POWER_LEVEL;//设置发射功率
     memset(&init, 0, sizeof(init));
 
     init.advdata.name_type          = BLE_ADVDATA_FULL_NAME;
     init.advdata.include_appearance = false;
     init.advdata.flags              = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
-
+		init.advdata.p_tx_power_level        = &tx_power_level;
+	
     init.srdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
     init.srdata.uuids_complete.p_uuids  = m_adv_uuids;
 
@@ -1208,7 +1210,11 @@ void KeyExit_pin_init(void)
 }
 
 
-
+static void tx_power_set(void)
+{
+    ret_code_t err_code = sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_ADV, m_advertising.adv_handle, TX_POWER_LEVEL);
+    APP_ERROR_CHECK(err_code);
+}
 
 
 
@@ -1273,6 +1279,7 @@ int main(void)
 		conn_evt_len_ext_set();//连接事件长度扩展
     // Start execution.
     NRF_LOG_INFO("Debug logging for UART over RTT started.");
+		tx_power_set();//设置发送功率
     advertising_start(erase_bonds);//开始广播
 		
 
