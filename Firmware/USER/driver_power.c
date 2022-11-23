@@ -64,37 +64,34 @@ void SPI_uninit();
 void prepare_before_sleep(void)
 {
 	app_timer_stop_all();
-	nrf_gpio_pin_clear(9); //1299оƬ	PWDN
+	nrf_gpio_pin_clear(ADS_PWDN_PIN); //1299оƬ	PWDN
 	SPI_uninit();
 	
-	
-	nrf_gpio_pin_clear(18);
-	
-	nrf_gpio_pin_clear(17);
-	nrf_delay_ms(10);	
+	AVDD_disable();
+	cpc_ldo1_disable();	
 	
 	nrf_gpio_cfg_default(2);
-	nrf_gpio_cfg_default(3);
-	nrf_gpio_cfg_default(4);
-	nrf_gpio_cfg_default(5);
-	nrf_gpio_cfg_default(6);
-	nrf_gpio_cfg_default(7);
-	nrf_gpio_cfg_default(8);
-	nrf_gpio_cfg_default(9);
-	nrf_gpio_cfg_default(10);
+	nrf_gpio_cfg_default(DRDY_PIN);
+	nrf_gpio_cfg_default(SPI_MISO_PIN);
+	nrf_gpio_cfg_default(SPI_SCK_PIN);
+	nrf_gpio_cfg_default(SPI_SS_PIN);
+	nrf_gpio_cfg_default(ADS_START_PIN);
+	nrf_gpio_cfg_default(ADS_RESET_PIN);
+	nrf_gpio_cfg_default(ADS_PWDN_PIN);
+	nrf_gpio_cfg_default(SPI_MOSI_PIN);
 	
-//	nrf_gpio_cfg_default(14);
-	nrf_gpio_cfg_default(15);
-	nrf_gpio_cfg_default(16);
+	nrf_gpio_cfg_default(BUTTON_2);
+	nrf_gpio_cfg_default(BUTTON_3);
+	nrf_gpio_cfg_default(BUTTON_4);
 	
-	nrf_gpio_cfg_default(17);
-//	nrf_gpio_cfg_default(18);
+	nrf_gpio_cfg_default(DVDD_EN_PIN);
+//	nrf_gpio_cfg_default(AVDD_EN_PIN);
 
 		
-	nrf_gpio_cfg_default(25);			//LED1
-	nrf_gpio_cfg_default(26);			//LED2		
-	nrf_gpio_cfg_default(27);	
-	nrf_gpio_cfg_default(31);	
+	nrf_gpio_cfg_default(LED_1);			//LED1
+	nrf_gpio_cfg_default(LED_2);			//LED2		
+	nrf_gpio_cfg_default(LED_3);	
+	nrf_gpio_cfg_default(LED_4);	
 }
 
 

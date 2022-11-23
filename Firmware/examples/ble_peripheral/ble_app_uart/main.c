@@ -161,7 +161,7 @@ static ble_uuid_t m_adv_uuids[]          =                                      
 
 
 /**
-**自定义代码
+**数据缓存队列相关
 **/
 void ble_data_send_with_queue(void);
 typedef struct {
@@ -172,7 +172,7 @@ typedef struct {
 NRF_QUEUE_DEF(buffer_t, m_buf_queue, 30, NRF_QUEUE_MODE_NO_OVERFLOW);
 
 APP_TIMER_DEF(m_timer_speed);
-uint8_t m_data_array[6300];
+uint8_t m_data_array[220*30];
 uint32_t m_len_sent;
 uint32_t m_cnt_7ms;
 
@@ -261,8 +261,6 @@ static void nus_data_handler(ble_nus_evt_t * p_evt)
 {
     if (p_evt->type == BLE_NUS_EVT_RX_DATA)
     {
-        uint32_t err_code;
-
         NRF_LOG_DEBUG("Received data from BLE NUS. Writing data on UART.");
         NRF_LOG_HEXDUMP_DEBUG(p_evt->params.rx_data.p_data, p_evt->params.rx_data.length);
 				if(p_evt->params.rx_data.length < 10) {//防止接收数组超出范围
@@ -654,96 +652,6 @@ void bsp_event_handler(bsp_event_t event)
 }
 
 
-/**@brief   Function for handling app_uart events.
- *
- * @details This function will receive a single character from the app_uart module and append it to
- *          a string. The string will be be sent over BLE when the last character received was a
- *          'new line' '\n' (hex 0x0A) or if the string has reached the maximum data length.
- */
-/**@snippet [Handling the data received over UART] */
-void uart_event_handle(app_uart_evt_t * p_event)
-{
-    static uint8_t data_array[BLE_NUS_MAX_DATA_LEN];
-    static uint8_t index = 0;
-    uint32_t       err_code;
-
-    switch (p_event->evt_type)
-    {
-        case APP_UART_DATA_READY:
-            UNUSED_VARIABLE(app_uart_get(&data_array[index]));
-            index++;
-
-            if ((data_array[index - 1] == '\n') ||
-                (data_array[index - 1] == '\r') ||
-                (index >= m_ble_nus_max_data_len))
-            {
-                if (index > 1)
-                {
-                    NRF_LOG_DEBUG("Ready to send data over BLE NUS");
-                    NRF_LOG_HEXDUMP_DEBUG(data_array, index);
-
-                    do
-                    {
-                        uint16_t length = (uint16_t)index;
-                        err_code = ble_nus_data_send(&m_nus, data_array, &length, m_conn_handle);
-                        if ((err_code != NRF_ERROR_INVALID_STATE) &&
-                            (err_code != NRF_ERROR_RESOURCES) &&
-                            (err_code != NRF_ERROR_NOT_FOUND))
-                        {
-                            APP_ERROR_CHECK(err_code);
-                        }
-                    } while (err_code == NRF_ERROR_RESOURCES);
-                }
-
-                index = 0;
-            }
-            break;
-
-        case APP_UART_COMMUNICATION_ERROR:
-            APP_ERROR_HANDLER(p_event->data.error_communication);
-            break;
-
-        case APP_UART_FIFO_ERROR:
-            APP_ERROR_HANDLER(p_event->data.error_code);
-            break;
-
-        default:
-            break;
-    }
-}
-/**@snippet [Handling the data received over UART] */
-
-
-/**@brief  Function for initializing the UART module.
- */
-/**@snippet [UART Initialization] */
-static void uart_init(void)
-{
-    uint32_t                     err_code;
-    app_uart_comm_params_t const comm_params =
-    {
-        .rx_pin_no    = RX_PIN_NUMBER,
-        .tx_pin_no    = TX_PIN_NUMBER,
-        .rts_pin_no   = RTS_PIN_NUMBER,
-        .cts_pin_no   = CTS_PIN_NUMBER,
-        .flow_control = APP_UART_FLOW_CONTROL_DISABLED,
-        .use_parity   = false,
-#if defined (UART_PRESENT)
-        .baud_rate    = NRF_UART_BAUDRATE_115200
-#else
-        .baud_rate    = NRF_UARTE_BAUDRATE_115200
-#endif
-    };
-
-    APP_UART_FIFO_INIT(&comm_params,
-                       UART_RX_BUF_SIZE,
-                       UART_TX_BUF_SIZE,
-                       uart_event_handle,
-                       APP_IRQ_PRIORITY_LOWEST,
-                       err_code);
-    APP_ERROR_CHECK(err_code);
-}
-/**@snippet [UART Initialization] */
 
 #define TX_POWER_LEVEL                  (4)
 
@@ -902,7 +810,10 @@ static void advertising_start(bool erase_bonds)
     }
 }
 
-void conn_evt_len_ext_set(void)//连接事件长度扩展
+/**
+*连接事件长度扩展
+*/
+void conn_evt_len_ext_set(void)
 {
     ret_code_t err_code;
     ble_opt_t  opt;
@@ -915,6 +826,9 @@ void conn_evt_len_ext_set(void)//连接事件长度扩展
 
 }
 
+/**
+*队列有数据就调用BLE发送，以及重发
+*/
 buffer_t m_buf;
 void ble_data_send_with_queue(void)
 {
@@ -972,7 +886,9 @@ void ble_data_send_with_queue(void)
 	}			
 }
 
-/*1-测试用生成的数据*/
+/**
+*1-测试用生成的数据
+*/
 static void throughput_timer_handler(void * p_context)
 {
 	ret_code_t err_code1, err_code2;	
@@ -1010,7 +926,9 @@ static void throughput_timer_handler(void * p_context)
 	}	
 }
 
-/*2-ADS1299生成的数据*/
+/**
+*2-ADS1299生成的数据
+*/
 extern uint8_t eCon_Message[240];
 void  data_prepare()
 {
@@ -1037,7 +955,9 @@ void  data_prepare()
 	}
 }
 
-
+/**
+*数据发送压力测试用
+*/
 void throughput_test()
 {
 	ret_code_t err_code;
@@ -1050,11 +970,10 @@ void throughput_test()
 
 #include "ADS1299_Library.h"
 
-
-uint8_t FullyCharge_count = 0;
 /*
 	检测充电器拔出与充满
 */
+uint8_t FullyCharge_count = 0;
 void ChargerUnplug_or_FullyCharged(void)
 {
 		ret_code_t err_code;
@@ -1066,7 +985,7 @@ void ChargerUnplug_or_FullyCharged(void)
 		if((nrf_gpio_pin_read(CHARGE_STA_PIN) == 1) && (nrf_gpio_pin_read(CHARGE_VCHECK_PIN) == 1)) {
 			FullyCharge_count++;
 			if(FullyCharge_count == 5) {
-				bsp_indication_set(BSP_INDICATE_USER_STATE_1);
+				bsp_indication_set(BSP_INDICATE_USER_STATE_1);//充满绿灯常亮
 			}						
 		}
 		/**/
@@ -1084,6 +1003,14 @@ void ChargerUnplug_or_FullyCharged(void)
 }
 
 /*
+	打开充电定时器
+*/
+void charging_timer_start(void)
+{
+	app_timer_start(charging_timer, APP_TIMER_TICKS(500),NULL);
+}
+
+/*
 	充电定时器函数，500ms进入一次
 */
 static void charging_timer_handler(void * p_context)
@@ -1092,15 +1019,29 @@ static void charging_timer_handler(void * p_context)
 }
 
 /*
+	打开系统检测函数
+*/
+void system_task_timer_start(void)
+{
+	app_timer_start(system_task_timer, APP_TIMER_TICKS(500),NULL);
+}
+/*
+	关闭系统检测函数
+*/
+void system_task_timer_stop(void)
+{
+	app_timer_stop(system_task_timer);
+}
+/*
 	系统检测函数，500ms进入一次
 */
 static void system_task_timer_handler(void * p_context)
 {
 	if(RXbuff[0]) {
-		app_timer_stop(system_task_timer);
+		system_task_timer_stop();
 		ADS_state_choose(RXbuff[0]);
 		memset(RXbuff,0,sizeof(RXbuff));
-		app_timer_start(system_task_timer, APP_TIMER_TICKS(500),NULL);
+		system_task_timer_start();
 	}
 	if(m_conn_handle != BLE_HCI_STATUS_CODE_SUCCESS){//蓝牙未建立连接
 		ADS_SDATAC();//停止连续读模式
@@ -1148,7 +1089,7 @@ void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 		bsp_board_leds_off();
 		bsp_indication_set(BSP_INDICATE_USER_STATE_3);//充电红灯闪烁
 		//打开定时器
-		app_timer_start(charging_timer, APP_TIMER_TICKS(500),NULL);
+		charging_timer_start();
 	}
 	if(pin == KEY_EXIT_PIN){
 		sleep_mode_enter();
@@ -1209,7 +1150,9 @@ void KeyExit_pin_init(void)
 	nrf_drv_gpiote_in_event_enable(KEY_EXIT_PIN,true);	
 }
 
-
+/**
+*蓝牙发射功率设置
+*/
 static void tx_power_set(void)
 {
     ret_code_t err_code = sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_ADV, m_advertising.adv_handle, TX_POWER_LEVEL);
@@ -1266,19 +1209,18 @@ int main(void)
 		uint8_t setupcheck = 0;
 		setupcheck = nrf_gpio_pin_read(CHARGE_VCHECK_PIN);
 		if(setupcheck==1) {//充电器插入唤醒
-			bsp_indication_set(BSP_INDICATE_USER_STATE_3);
-			app_timer_start(charging_timer, APP_TIMER_TICKS(500),NULL);
+			bsp_indication_set(BSP_INDICATE_USER_STATE_3);//充电红灯闪烁
+			charging_timer_start();
 			for(;;);
 		}
 
 /*充电引脚中断配置*/
 		Vcheck_pin_init();
 /*系统指令接收定时器*/
-		app_timer_start(system_task_timer, APP_TIMER_TICKS(500),NULL);
+		system_task_timer_start();
 
 		conn_evt_len_ext_set();//连接事件长度扩展
     // Start execution.
-    NRF_LOG_INFO("Debug logging for UART over RTT started.");
 		tx_power_set();//设置发送功率
     advertising_start(erase_bonds);//开始广播
 		
