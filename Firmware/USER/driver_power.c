@@ -80,7 +80,7 @@ void prepare_before_sleep(void)
 	nrf_gpio_cfg_default(ADS_PWDN_PIN);
 	nrf_gpio_cfg_default(SPI_MOSI_PIN);
 	
-	nrf_gpio_cfg_default(BUTTON_2);
+//	nrf_gpio_cfg_default(BUTTON_2);
 	nrf_gpio_cfg_default(BUTTON_3);
 	nrf_gpio_cfg_default(BUTTON_4);
 	

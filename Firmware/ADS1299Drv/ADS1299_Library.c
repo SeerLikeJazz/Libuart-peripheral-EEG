@@ -382,12 +382,8 @@ void ADS_ModeSelect(uint8_t mode)
 			break;
 		case TestSignal:
 			{
-	ADS_WREG(CONFIG3,0xE0);
-	nrf_delay_ms(100);
-	ADS_WREG(CONFIG1,0x95);
-	nrf_delay_ms(100);
-	ADS_WREG(CONFIG2,0xD0);
-	nrf_delay_ms(100);
+				ADS_WREG(CONFIG2,0xD0);
+				nrf_delay_ms(100);
 				ADS_WREG(CH1SET,0x05);
 				nrf_delay_ms(10);
 				ADS_WREG(CH2SET,0x05);
@@ -423,23 +419,28 @@ void ADS_state_choose(uint8_t EEG_State)
 {
 	
 		if(Is_standby){
+			Is_standby = false;
 			ADS_WAKEUP();
 		}
 		ADS_SDATAC();//停止连续读模式
     switch(EEG_State) {
         case IMPEDANCING:
+						initialize_ads(SAMPLE_RATE_500);
             ADS_ModeSelect(Impedance);
             break;
 
         case WAVE:
+						initialize_ads(SAMPLE_RATE_500);
             ADS_ModeSelect(Normal);
             break;
 
         case INTERNALSHORT:
+						initialize_ads(SAMPLE_RATE_500);
             ADS_ModeSelect(InternalShort);
             break;
 
         case TESTSIGAL:
+						initialize_ads(SAMPLE_RATE_500);
             ADS_ModeSelect(TestSignal);
             break;
 				
