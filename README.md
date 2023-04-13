@@ -2,13 +2,22 @@
 8 ch signals send by BLE   
 ![](/Image/PCB_board.jpg)  
 
+## Attention
+- 长按进入BSP_EVENT_SLEEP,配置关机引脚中断，按键释放(LOTOHI)的时候才进入中断
+- 指示灯逻辑
+- 软件定时器：system_task_timer(500ms,指令是否更新)；charging_timer(500ms充电用定时器)
+- DevicePara结构体，变量adv_started用来标记是否广播
+- 连接间隔20ms,ios会断开连接
 
 ## 待完成
-- 电池电量监测
+- 电池电量监测，服务or数据包？
 - 各种状态下功耗验证：STANDBY-3mA；PWDN-1.26mA；全速工作：15mA；待机：7uA
 - 可以失能nRF_Log
 
 ## 更新记录
+### 23.04.14
+- 长按关机时亮红灯提示
+
 ### 22.12.19
 - fix："Z"发送后"W"运行不对，重新initialize_ads
 

@@ -623,7 +623,8 @@ void bsp_event_handler(bsp_event_t event)
     {
         case BSP_EVENT_SLEEP:
 					bsp_indication_set(BSP_INDICATE_IDLE);
-					KeyExit_pin_init();//配置关机引脚中断
+					bsp_board_led_on(BSP_BOARD_LED_2);//亮红灯提示关机
+					KeyExit_pin_init();//配置关机引脚中断，进入休眠
 //            sleep_mode_enter();
             break;
 
